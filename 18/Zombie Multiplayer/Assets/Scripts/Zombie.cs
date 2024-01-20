@@ -4,7 +4,8 @@ using UnityEngine;
 using UnityEngine.AI; // AI, 내비게이션 시스템 관련 코드를 가져오기
 
 // 좀비 AI 구현
-public class Zombie : LivingEntity {
+public class Zombie : LivingEntity
+{
     public LayerMask whatIsTarget; // 공격 대상 레이어
 
     private LivingEntity targetEntity; // 추적할 대상
@@ -18,10 +19,9 @@ public class Zombie : LivingEntity {
     private AudioSource zombieAudioPlayer; // 오디오 소스 컴포넌트
     private Renderer zombieRenderer; // 렌더러 컴포넌트
 
-    public float damage = 20f; // 공격력
+    public float damage = 20.0f; // 공격력
     public float timeBetAttack = 0.5f; // 공격 간격
     private float lastAttackTime; // 마지막 공격 시점
-
 
     // 추적할 대상이 존재하는지 알려주는 프로퍼티
     private bool hasTarget
@@ -29,7 +29,7 @@ public class Zombie : LivingEntity {
         get
         {
             // 추적할 대상이 존재하고, 대상이 사망하지 않았다면 true
-            if (targetEntity != null && !targetEntity.dead)
+            if ((targetEntity != null) && (!targetEntity.dead))
             {
                 return true;
             }
@@ -39,33 +39,37 @@ public class Zombie : LivingEntity {
         }
     }
 
-    private void Awake() {
+    private void Awake()
+    {
         // 게임 오브젝트로부터 사용할 컴포넌트들을 가져오기
         navMeshAgent = GetComponent<NavMeshAgent>();
         zombieAnimator = GetComponent<Animator>();
         zombieAudioPlayer = GetComponent<AudioSource>();
 
-        // 렌더러 컴포넌트는 자식 게임 오브젝트에게 있으므로
-        // GetComponentInChildren() 메서드를 사용
+        // 렌더러 컴포넌트는 자식 게임 오브젝트에게 있으므로 GetComponentInChildren() 메서드를 사용
         zombieRenderer = GetComponentInChildren<Renderer>();
     }
 
     // 좀비 AI의 초기 스펙을 결정하는 셋업 메서드
     [PunRPC]
-    public void Setup(float newHealth, float newDamage,
-        float newSpeed, Color skinColor) {
+    public void Setup(float newHealth, float newDamage, float newSpeed, Color skinColor)
+    {
         // 체력 설정
         startingHealth = newHealth;
         health = newHealth;
+
         // 공격력 설정
         damage = newDamage;
+
         // 내비메쉬 에이전트의 이동 속도 설정
         navMeshAgent.speed = newSpeed;
+
         // 렌더러가 사용중인 머테리얼의 컬러를 변경, 외형 색이 변함
         zombieRenderer.material.color = skinColor;
     }
-    
-    private void Start() {
+
+    private void Start()
+    {
         // 호스트가 아니라면 AI의 추적 루틴을 실행하지 않음
         if (!PhotonNetwork.IsMasterClient)
         {
@@ -76,7 +80,8 @@ public class Zombie : LivingEntity {
         StartCoroutine(UpdatePath());
     }
 
-    private void Update() {
+    private void Update()
+    {
         // 호스트가 아니라면 애니메이션의 파라미터를 직접 갱신하지 않음
         // 호스트가 파라미터를 갱신하면 클라이언트들에게 자동으로 전달되기 때문.
         if (!PhotonNetwork.IsMasterClient)
@@ -89,34 +94,34 @@ public class Zombie : LivingEntity {
     }
 
     // 주기적으로 추적할 대상의 위치를 찾아 경로를 갱신
-    private IEnumerator UpdatePath() {
+    private IEnumerator UpdatePath()
+    {
         // 살아있는 동안 무한 루프
         while (!dead)
         {
             if (hasTarget)
             {
-                // 추적 대상 존재 : 경로를 갱신하고 AI 이동을 계속 진행
+                // 추적 대상 존재: 경로를 갱신하고 AI 이동을 계속 진행
                 navMeshAgent.isStopped = false;
                 navMeshAgent.SetDestination(targetEntity.transform.position);
             }
             else
             {
-                // 추적 대상 없음 : AI 이동 중지
+                // 추적 대상 없음: AI 이동 중지
                 navMeshAgent.isStopped = true;
 
                 // 20 유닛의 반지름을 가진 가상의 구를 그렸을때, 구와 겹치는 모든 콜라이더를 가져옴
                 // 단, targetLayers에 해당하는 레이어를 가진 콜라이더만 가져오도록 필터링
-                Collider[] colliders =
-                    Physics.OverlapSphere(transform.position, 20f, whatIsTarget);
+                Collider[] colliders = Physics.OverlapSphere(transform.position, 20.0f, whatIsTarget);
 
                 // 모든 콜라이더들을 순회하면서, 살아있는 플레이어를 찾기
-                for (int i = 0; i < colliders.Length; i++)
+                for (int i = 0; i < colliders.Length; ++i)
                 {
                     // 콜라이더로부터 LivingEntity 컴포넌트 가져오기
                     LivingEntity livingEntity = colliders[i].GetComponent<LivingEntity>();
 
                     // LivingEntity 컴포넌트가 존재하며, 해당 LivingEntity가 살아있다면,
-                    if (livingEntity != null && !livingEntity.dead)
+                    if ((livingEntity != null) && (!livingEntity.dead))
                     {
                         // 추적 대상을 해당 LivingEntity로 설정
                         targetEntity = livingEntity;
@@ -135,7 +140,8 @@ public class Zombie : LivingEntity {
 
     // 데미지를 입었을때 실행할 처리
     [PunRPC]
-    public override void OnDamage(float damage, Vector3 hitPoint, Vector3 hitNormal) {
+    public override void OnDamage(float damage, Vector3 hitPoint, Vector3 hitNormal)
+    {
         // 아직 사망하지 않은 경우에만 피격 효과 재생
         if (!dead)
         {
@@ -153,12 +159,14 @@ public class Zombie : LivingEntity {
     }
 
     // 사망 처리
-    public override void Die() {
+    public override void Die()
+    {
         // LivingEntity의 Die()를 실행하여 기본 사망 처리 실행
         base.Die();
 
         // 다른 AI들을 방해하지 않도록 자신의 모든 콜라이더들을 비활성화
         Collider[] zombieColliders = GetComponents<Collider>();
+
         for (int i = 0; i < zombieColliders.Length; i++)
         {
             zombieColliders[i].enabled = false;
@@ -175,23 +183,22 @@ public class Zombie : LivingEntity {
         zombieAudioPlayer.PlayOneShot(deathSound);
     }
 
-    private void OnTriggerStay(Collider other) {
+    private void OnTriggerStay(Collider other)
+    {
         // 호스트가 아니라면 공격 실행 불가
         if (!PhotonNetwork.IsMasterClient)
         {
             return;
         }
 
-        // 자신이 사망하지 않았으며,
-        // 최근 공격 시점에서 timeBetAttack 이상 시간이 지났다면 공격 가능
-        if (!dead && Time.time >= lastAttackTime + timeBetAttack)
+        // 자신이 사망하지 않았으며, 최근 공격 시점에서 timeBetAttack 이상 시간이 지났다면 공격 가능
+        if ((!dead) && (Time.time >= lastAttackTime + timeBetAttack))
         {
             // 상대방으로부터 LivingEntity 타입을 가져오기 시도
-            LivingEntity attackTarget
-                = other.GetComponent<LivingEntity>();
+            LivingEntity attackTarget = other.GetComponent<LivingEntity>();
 
             // 상대방의 LivingEntity가 자신의 추적 대상이라면 공격 실행
-            if (attackTarget != null && attackTarget == targetEntity)
+            if ((attackTarget != null) && (attackTarget == targetEntity))
             {
                 // 최근 공격 시간을 갱신
                 lastAttackTime = Time.time;
